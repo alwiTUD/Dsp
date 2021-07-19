@@ -418,6 +418,40 @@ TEST_F(DspTest, Spectrogram)
 	}
 }
 
+TEST_F(DspTest, MelFilterBankArea)
+{
+	std::pair<double, double> cutoffFreqs_Hz{ 200, 3700 };
+	const int numFilters = 15;
+
+	std::vector<double> borderFrequencies_Hz;
+	borderFrequencies_Hz.reserve(numFilters + 2);
+	std::vector<double> filterHeights;
+	filterHeights.reserve(numFilters);
+	std::vector<double> filterAreas;
+	filterAreas.reserve(numFilters);
+
+	borderFrequencies_Hz = dsp::filter::findBorderFreqs_Hz(numFilters, cutoffFreqs_Hz);
+	filterHeights = dsp::filter::findFilterHeights(borderFrequencies_Hz);
+
+	for (int ii = 0; ii < numFilters; ++ii)
+	{
+		filterAreas.push_back((borderFrequencies_Hz[ii + 2] - borderFrequencies_Hz[ii]) * filterHeights[ii] * 0.5);
+	}
+
+	double sumOfAreas = 0;
+	for (const auto& filterArea : filterAreas)
+	{
+		if (abs(filterArea - 1.0) < DBL_EPSILON)
+		{
+			sumOfAreas = sumOfAreas + filterArea;
+		}
+	}
+	
+	EXPECT_DOUBLE_EQ(sumOfAreas, numFilters);
+
+
+}
+
 TEST_F(DspTest, Benchmarking)
 {
 	std::ofstream outFile("../scripts/dsp_benchmark.csv", std::ios::out);

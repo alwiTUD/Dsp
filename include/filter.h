@@ -40,4 +40,26 @@ namespace dsp::filter
 	/// @return Signal containing the median filtered samples (same size as input).
 	template<class T>
 	dsp::Signal<T> medianfilter(const Signal<T>& x, typename Signal<T>::size_type kernel_size = 3);
+
+	/// @brief Applies a mel filterbank to a magnitude spectrogram.
+	/// @tparam T Data type of the spectrogram
+	/// @param spectrogram Input spectrogram
+	/// @param numFilters Number of triangular filters
+	/// @param cutoffFreqs_Hz Lower and upper border frequencies of the mel filterbank [Hz]
+	/// @param samplingRate Sampling rate [Hz]
+	/// @return MelSpectrogram
+	template<class T>
+	std::vector<std::vector<T>> melFilterbank(const std::vector<std::vector<T>>& spectrogram, int numFilters, std::pair<double, double> cutoffFreqs_Hz, double samplingRate);
+
+	/// @brief Find border frequencies for given number of filters and cutoff frequencies [Hz]
+	/// Border frequencies will be equally spaced in mel domain
+	/// @param numFilters Number of triangular filters
+	/// @param cutoffFreqs_Hz Lower and upper border frequencies of the mel filterbank [Hz]
+	/// @return Border frequencies of the triangular filters [Hz]
+	std::vector<double> findBorderFreqs_Hz(int numFilters, std::pair<double, double> cutoffFreqs_Hz);
+
+	/// @brief Find heights of the triangular filters so that all filters will have an area equal to 1
+	/// @param borderFreqs_Hz Border frequencies [Hz]
+	/// @return Filter heights
+	std::vector<double> findFilterHeights(std::vector<double> borderFreqs_Hz);
 }

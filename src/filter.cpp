@@ -112,6 +112,69 @@ dsp::Signal<T> dsp::filter::medianfilter(const Signal<T>& x, typename Signal<T>:
 	return Signal(x.getSamplingRate_Hz(), medianfilter<T>(x.getSamples(), kernel_size));
 }
 
+template<class T>
+std::vector<std::vector<T>> dsp::filter::melFilterbank(const std::vector<std::vector<T>>& spectrogram, int numFilters, std::pair<double, double> cutoffFreqs_Hz, double samplingRate)
+{
+	std::vector<double> borderFreqs_Hz;
+	borderFreqs_Hz.reserve(numFilters + 2);
+	
+	borderFreqs_Hz = findBorderFreqs_Hz(numFilters, cutoffFreqs_Hz);
+
+	std::vector<double> filterHeights;
+	filterHeights.reserve(numFilters);
+	filterHeights = findFilterHeights(borderFreqs_Hz);
+
+	// TODO: Allocation of FFT bins to corresponding filter inside of the filter bank
+	// TODO: Write function findFilterForFrequencyBins()
+	// TODO: Test if FFT bin of middle frequency is belonging to correct filter inside of filter bank
+	// TODO: Weighting and summation for each filter
+	// TODO: Logarithmierung
+	
+	
+	
+	return std::vector<std::vector<T>>();
+}
+
+std::vector<double> dsp::filter::findBorderFreqs_Hz(int numFilters, std::pair<double, double> cutoffFreqs_Hz)
+{
+	double fmin_Mel = dsp::convert::hz2mel(cutoffFreqs_Hz.first);
+	double fmax_Mel = dsp::convert::hz2mel(cutoffFreqs_Hz.second);
+	double freqDiff_Mel = fmax_Mel - fmin_Mel;
+	double freqDelta_Mel = freqDiff_Mel / (numFilters + 1);
+
+	std::vector<double> borderFreqs;
+	borderFreqs.reserve(numFilters + 2);
+	for (int ii = 0; ii < numFilters + 2; ii++)
+	{
+		if (dsp::convert::mel2hz(fmin_Mel + ii * freqDelta_Mel) < cutoffFreqs_Hz.first)
+		{
+			borderFreqs.push_back(cutoffFreqs_Hz.first);
+		}
+		else if (dsp::convert::mel2hz(fmin_Mel + ii * freqDelta_Mel) > cutoffFreqs_Hz.second)
+		{
+			borderFreqs.push_back(cutoffFreqs_Hz.second);
+		}
+		else
+		{
+			borderFreqs.push_back(dsp::convert::mel2hz(fmin_Mel + ii * freqDelta_Mel));
+		}
+	}
+	return borderFreqs;
+}
+
+std::vector<double> dsp::filter::findFilterHeights(std::vector<double> borderFreqs_Hz)
+{
+	std::vector<double> filterHeights;
+	filterHeights.reserve(borderFreqs_Hz.size() - 2);
+
+	for (int ii = 0; ii < borderFreqs_Hz.size() - 2; ++ii)
+	{
+		filterHeights.push_back(2.0 / (borderFreqs_Hz[ii + 2] - borderFreqs_Hz[ii]));
+	}
+	
+	return filterHeights;
+}
+
 
 // Explicit template instantiation
 template std::vector<float> dsp::filter::filter(std::vector<float> b,
