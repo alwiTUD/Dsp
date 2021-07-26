@@ -1,10 +1,14 @@
 #include "gtest/gtest.h"
+#include "MelFilterbankReference.h"
+#include "MelSpectrogramReference.h"
+#include "SpectrogramReference.h"
 
 #include <numeric>
 #include <iostream>
 #include <fstream>
 #include <chrono>
 #include <random>
+#include <string>
 
 
 #include "dsp.h"
@@ -433,9 +437,9 @@ TEST_F(DspTest, MelFilterBankArea)
 	borderFrequencies_Hz = dsp::filter::findBorderFreqs_Hz(numFilters, cutoffFreqs_Hz);
 	filterHeights = dsp::filter::findFilterHeights(borderFrequencies_Hz);
 
-	for (int ii = 0; ii < numFilters; ++ii)
+	for (int melFilt = 0; melFilt < numFilters; ++melFilt)
 	{
-		filterAreas.push_back((borderFrequencies_Hz[ii + 2] - borderFrequencies_Hz[ii]) * filterHeights[ii] * 0.5);
+		filterAreas.push_back((borderFrequencies_Hz[melFilt + 2] - borderFrequencies_Hz[melFilt]) * filterHeights[melFilt] * 0.5);
 	}
 
 	double sumOfAreas = 0;
@@ -448,7 +452,77 @@ TEST_F(DspTest, MelFilterBankArea)
 	}
 	
 	EXPECT_DOUBLE_EQ(sumOfAreas, numFilters);
+}
 
+TEST_F(DspTest, MelFilterBankWeights)
+{
+	std::pair<double, double> cutoffFreqs_Hz{ 200, 3700 };
+	const int numFilters = 15;
+	const int samplingFrequency = 16000;
+	int numPositiveFrequencyBins = static_cast<int>(melFilterbankReference[0].size());
+
+	std::vector<double> borderFrequencies_Hz;
+	borderFrequencies_Hz.reserve(numFilters + 2);
+	std::vector<double> filterHeights;
+	filterHeights.reserve(numFilters);
+	std::vector<double> filterAreas;
+	filterAreas.reserve(numFilters);
+	std::vector<std::vector<double>> filterWeights;
+	filterWeights.resize(numFilters, std::vector<double>(numPositiveFrequencyBins));
+
+	borderFrequencies_Hz = dsp::filter::findBorderFreqs_Hz(numFilters, cutoffFreqs_Hz);
+	filterHeights = dsp::filter::findFilterHeights(borderFrequencies_Hz);
+	filterWeights = dsp::filter::findFilterWeights(borderFrequencies_Hz, filterHeights, samplingFrequency, numPositiveFrequencyBins);
+
+	int numberOfEqualElements = 0;
+
+	for (int melFilt = 0; melFilt < numFilters; ++melFilt) {
+		for (int frequencyBin = 0; frequencyBin < numPositiveFrequencyBins; ++frequencyBin) {
+			if (abs(melFilterbankReference[melFilt][frequencyBin] - filterWeights[melFilt][frequencyBin]) < 0.00001) {
+				numberOfEqualElements += 1;
+			}
+		}
+	}
+
+	EXPECT_EQ(numberOfEqualElements, numFilters * numPositiveFrequencyBins);
+}
+
+
+TEST_F(DspTest, MelFilterAndSum)
+{
+	std::pair<double, double> cutoffFreqs_Hz{ 200, 3700 };
+	const int numFilters = 15;
+	const int samplingFrequency = 44100;
+	int numPositiveFrequencyBins = static_cast<int>(melFilterbankReference[0].size());
+	int numFrames = static_cast<int>(melSpectrogramReference[0].size());
+
+	std::vector<double> borderFrequencies_Hz;
+	borderFrequencies_Hz.reserve(numFilters + 2);
+	std::vector<double> filterHeights;
+	filterHeights.reserve(numFilters);
+	std::vector<double> filterAreas;
+	filterAreas.reserve(numFilters);
+	std::vector<std::vector<double>> filterWeights;
+	filterWeights.resize(numFilters, std::vector<double>(numPositiveFrequencyBins));
+	std::vector<std::vector<double>> melSpectrogram;
+	melSpectrogram.resize(numFilters, std::vector<double>(melSpectrogramReference[0].size()));
+
+	borderFrequencies_Hz = dsp::filter::findBorderFreqs_Hz(numFilters, cutoffFreqs_Hz);
+	filterHeights = dsp::filter::findFilterHeights(borderFrequencies_Hz);
+	filterWeights = dsp::filter::findFilterWeights(borderFrequencies_Hz, filterHeights, samplingFrequency, numPositiveFrequencyBins);
+	melSpectrogram = dsp::filter::filterAndSum(filterWeights, spectrogramReference);
+
+	int numberOfEqualElements = 0;
+
+	for (int melFilt = 0; melFilt < numFilters; ++melFilt) {
+		for (int frame = 0; frame < numFrames; ++frame) {
+			if (abs(melSpectrogramReference[melFilt][frame] - melSpectrogram[melFilt][frame]) < 0.00001) {
+				numberOfEqualElements += 1;
+			}
+		}
+	}
+
+	EXPECT_EQ(numberOfEqualElements, numFilters * numFrames);
 
 }
 

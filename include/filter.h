@@ -62,4 +62,18 @@ namespace dsp::filter
 	/// @param borderFreqs_Hz Border frequencies [Hz]
 	/// @return Filter heights
 	std::vector<double> findFilterHeights(std::vector<double> borderFreqs_Hz);
+
+	/// @brief Find the weights of each frequency bin for each filter of the Mel filter bank
+	/// @param borderFreqs_Hz Border frequencies of the triangular filters [Hz]
+	/// @param filterHeights Filter heights of the mel filter bank
+	/// @param samplingRate Sampling rate [Hz]
+	/// @param numPositiveFrequencyBins equal to nFFT/2 + 1
+	/// @return A vector of vectors. The "matrix" contains the filter weights of the mel filter bank [numFilters x numPositiveFrequencyBins]
+	std::vector<std::vector<double>> findFilterWeights(std::vector<double>& borderFreqs_Hz, std::vector<double>& filterHeights, double samplingRate, int numPositiveFrequencyBins);
+
+	/// @brief Applies the mel filterbank to the spectrogram
+	/// @param wFilt The filter weights of the mel filter bank
+	/// @param spectrogram The spectrogram
+	/// @return The values of the energy within each mel filter for each time frame
+	std::vector<std::vector<double>> filterAndSum(std::vector<std::vector<double>>& wFilt, std::vector<std::vector<double>>& spectrogram);
 }

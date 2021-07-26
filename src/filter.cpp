@@ -120,17 +120,26 @@ std::vector<std::vector<T>> dsp::filter::melFilterbank(const std::vector<std::ve
 	
 	borderFreqs_Hz = findBorderFreqs_Hz(numFilters, cutoffFreqs_Hz);
 
-	std::vector<double> filterHeights;
+	std::vector<double> filterHeights; 
 	filterHeights.reserve(numFilters);
 	filterHeights = findFilterHeights(borderFreqs_Hz);
 
 	// TODO: Allocation of FFT bins to corresponding filter inside of the filter bank
-	// TODO: Write function findFilterForFrequencyBins()
-	// TODO: Test if FFT bin of middle frequency is belonging to correct filter inside of filter bank
-	// TODO: Weighting and summation for each filter
+	// TODO: Write function findFilterWeights()
+	// TODO: Test filter weights with matlab benchmark: designAuditoryFilterBank(16000, "FFTLength", 1024, "NumBands", 15, "FrequencyRange", [200 3700]); 
+	// TODO: Weighting and summation for each filter ---> filterAndSum();
 	// TODO: Logarithmierung
-	
-	
+
+	const int numPositiveFrequencyBins = static_cast<int>(spectrogram.size()[0]);
+	std::vector<std::vector<double>> wFilt(numFilters, std::vector<double>(numPositiveFrequencyBins));
+	wFilt = findFilterWeights(borderFreqs_Hz, filterHeights, samplingRate, numPositiveFrequencyBins);
+
+	std::vector<std::vector<double>> melSpectrogram;
+	melSpectrogram.resize(numFilters, std::vector<double>(spectrogram[0].size());
+	melSpectrogram = filterAndSum(wFilt, spectrogram);
+
+	//melSpectrogram = filterAndSum(x, y, z)
+	//melLogSpectrogram = melLog(x, y, z)
 	
 	return std::vector<std::vector<T>>();
 }
@@ -173,6 +182,62 @@ std::vector<double> dsp::filter::findFilterHeights(std::vector<double> borderFre
 	}
 	
 	return filterHeights;
+}
+
+std::vector<std::vector<double>> dsp::filter::findFilterWeights(std::vector<double>& borderFreqs_Hz, std::vector<double>& filterHeights, double samplingRate, int numPositiveFrequencyBins)
+{
+	const int numFilters = static_cast<int>(filterHeights.size());
+	std::vector<std::vector<double>> wFilt(numFilters, std::vector<double>(numPositiveFrequencyBins));
+
+	for (int melFilt = 0; melFilt < numFilters; ++melFilt)
+	{
+		// Border frequencies of each filter of the mel filter bank
+		const double fLower = borderFreqs_Hz[melFilt];
+		const double fUpper = borderFreqs_Hz[melFilt + 2];
+		const double fCenter = borderFreqs_Hz[melFilt + 1];
+		const double filterHeight = filterHeights[melFilt];
+		for (int frequencyBinIdx = 0; frequencyBinIdx < numPositiveFrequencyBins; ++frequencyBinIdx)
+		{
+			const double freq = samplingRate * (static_cast<double>(frequencyBinIdx) / (2*(numPositiveFrequencyBins - 1)));
+			if (freq >= fLower && freq < fCenter)
+			{
+				// Equation for the filter weight: left side
+				wFilt[melFilt][frequencyBinIdx] = (freq - fLower) * (filterHeight / (fCenter - fLower));
+			}
+			else if (freq <= fUpper && freq >= fCenter)
+			{
+				// Equation for the filter weight: right side
+				wFilt[melFilt][frequencyBinIdx] = filterHeight - (freq - fCenter) * (filterHeight / (fUpper - fCenter));
+			}
+			else
+			{
+				// Zero (outside of the filter's scope)
+				wFilt[melFilt][frequencyBinIdx] = 0.0;
+			}
+		}
+	}	
+	
+	return wFilt;
+}
+
+std::vector<std::vector<double>> dsp::filter::filterAndSum(std::vector<std::vector<double>>& wFilt, std::vector<std::vector<double>>& spectrogram)
+{
+	int numFilt = static_cast<int>(wFilt.size());
+	int numberOfFrames = static_cast<int>(spectrogram[0].size());
+	int numberOfPositiveFrequencyBins = static_cast<int>(wFilt[0].size());
+
+	std::vector<std::vector<double>> melSpectrogram;
+	melSpectrogram.resize(numFilt, std::vector<double>(numberOfFrames, 0.0));
+
+	for (int melFilt = 0; melFilt < numFilt; ++melFilt) {
+		for (int frame = 0; frame < numberOfFrames; ++frame) {
+			for (int frequencyBin = 0; frequencyBin < numberOfPositiveFrequencyBins; ++frequencyBin) {
+				melSpectrogram[melFilt][frame] += wFilt[melFilt][frequencyBin] * spectrogram[frequencyBin][frame];
+			}
+		}
+	}
+
+	return melSpectrogram;
 }
 
 
