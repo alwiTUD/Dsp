@@ -75,5 +75,8 @@ namespace dsp::filter
 	/// @param wFilt The filter weights of the mel filter bank
 	/// @param spectrogram The spectrogram
 	/// @return The values of the energy within each mel filter for each time frame
-	std::vector<std::vector<double>> filterAndSum(std::vector<std::vector<double>>& wFilt, std::vector<std::vector<double>>& spectrogram);
+	std::vector<std::vector<double>> filterAndSum(const std::vector<std::vector<double>>& wFilt, const std::vector<std::vector<double>>& spectrogram);
+
+
+	std::vector<std::vector<double>> linearToLog(const std::vector<std::vector<double>>& linMelSpectrogram);
 }

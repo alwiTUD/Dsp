@@ -135,7 +135,7 @@ std::vector<std::vector<T>> dsp::filter::melFilterbank(const std::vector<std::ve
 	wFilt = findFilterWeights(borderFreqs_Hz, filterHeights, samplingRate, numPositiveFrequencyBins);
 
 	std::vector<std::vector<double>> melSpectrogram;
-	melSpectrogram.resize(numFilters, std::vector<double>(spectrogram[0].size());
+	melSpectrogram.resize(numFilters, std::vector<double>(static_cast<int>(spectrogram[0].size())));
 	melSpectrogram = filterAndSum(wFilt, spectrogram);
 
 	//melSpectrogram = filterAndSum(x, y, z)
@@ -220,7 +220,7 @@ std::vector<std::vector<double>> dsp::filter::findFilterWeights(std::vector<doub
 	return wFilt;
 }
 
-std::vector<std::vector<double>> dsp::filter::filterAndSum(std::vector<std::vector<double>>& wFilt, std::vector<std::vector<double>>& spectrogram)
+std::vector<std::vector<double>> dsp::filter::filterAndSum(const std::vector<std::vector<double>>& wFilt, const std::vector<std::vector<double>>& spectrogram)
 {
 	int numFilt = static_cast<int>(wFilt.size());
 	int numberOfFrames = static_cast<int>(spectrogram[0].size());
@@ -238,6 +238,21 @@ std::vector<std::vector<double>> dsp::filter::filterAndSum(std::vector<std::vect
 	}
 
 	return melSpectrogram;
+}
+
+std::vector<std::vector<double>> dsp::filter::linearToLog(const std::vector<std::vector<double>>& linMelSpectrogram) {
+	std::vector<std::vector<double>> logMelSpectrogram;
+	logMelSpectrogram.reserve(linMelSpectrogram.size());
+
+	std::vector<double> logMelSpectrogramFrame;
+	logMelSpectrogramFrame.resize(linMelSpectrogram[0].size());
+
+	for (auto& frame : linMelSpectrogram) {
+		std::transform(frame.begin(), frame.end(), logMelSpectrogramFrame.begin(), [](double val) -> double {return std::log10(val + std::numeric_limits<double>::epsilon()); }); // EPSILON equals the one from MATLAB
+		logMelSpectrogram.push_back(logMelSpectrogramFrame);
+	}
+
+	return logMelSpectrogram;
 }
 
 
