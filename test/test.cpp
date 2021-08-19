@@ -467,7 +467,7 @@ TEST_F(DspTest, MelFilterBankWeights)
 {
 	std::pair<double, double> cutoffFreqs_Hz{ 200, 3700 };
 	const int numFilters = 15;
-	const int samplingFrequency = 16000;
+	const int samplingFrequency = 44100;
 	int numPositiveFrequencyBins = static_cast<int>(melFilterbankReference[0].size());
 
 	std::vector<double> borderFrequencies_Hz;
@@ -505,7 +505,7 @@ TEST_F(DspTest, MelFilterAndSum)
 
 	for (int melFilt = 0; melFilt < numFilters; ++melFilt) {
 		for (int frame = 0; frame < numFrames; ++frame) {
-			EXPECT_NEAR(melSpectrogramReference[melFilt][frame], melSpectrogram[melFilt][frame], 5e-03);
+			EXPECT_NEAR(melSpectrogramReference[melFilt][frame], melSpectrogram[melFilt][frame], 1e-05);
 		}
 	}
 }
@@ -521,10 +521,30 @@ TEST_F(DspTest, MelLinearToLog)
 
 	for (int melFilt = 0; melFilt < numFilters; ++melFilt) {
 		for (int frame = 0; frame < numFrames; ++frame) {
-			EXPECT_NEAR(melLogSpectrogramReference[melFilt][frame], melLogSpectrogram[melFilt][frame], 0.5);
+			EXPECT_NEAR(melLogSpectrogramReference[melFilt][frame], melLogSpectrogram[melFilt][frame], 1e-05);
 		}
 	}
 
+}
+
+TEST_F(DspTest, MelFilterBank)
+{
+	
+	int numFilters = 15;
+	std::pair<double, double> cutoffFreqs{ 200, 3700 };
+	int samplingRate = 44100;
+	int numFrames = spectrogramReference[0].size();
+
+	std::vector<std::vector<double>> melLogSpectrogram;
+	melLogSpectrogram.resize(numFilters, std::vector<double>(numFrames));
+
+	melLogSpectrogram = dsp::filter::melFilterbank(spectrogramReference, numFilters, cutoffFreqs, samplingRate);
+
+	for (int melFilt = 0; melFilt < numFilters; ++melFilt) {
+		for (int frame = 0; frame < numFrames; ++frame) {
+			EXPECT_NEAR(melLogSpectrogramReference[melFilt][frame], melLogSpectrogram[melFilt][frame], 1e-05);
+		}
+	}
 }
 
 TEST_F(DspTest, Benchmarking)
