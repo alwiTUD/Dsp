@@ -230,6 +230,61 @@ namespace dsp
 		return xs;
 	}
 
+	
+	 /// @brief Returns the natural logarithm of each element of a vector
+	 /// @tparam T Data type of the elements
+	 /// @param val Value of the element
+	 /// @return Vector of natural logarithm of each element of input vector	 
+	template <typename T>
+	std::vector<T> log(const std::vector<T>& val)
+	{
+		std::vector<T> other = val;
+		for (T& i : other)
+		{
+			i = std::log(i);
+		}
+		return other;
+	}
+
+	/// @brief Returns the logarithm of base 10 of each element of a vector
+	/// @tparam T Data type of the elements
+	/// @param val Value of the element
+	/// @return Vector of logarithm of base 10 of each element of input vector	 
+	template <typename T>
+	std::vector<T> log10(const std::vector<T>& val)
+	{
+		std::vector<T> other = val;
+		for (T& i : other)
+		{
+			i = std::log10(i);
+		}
+		return other;
+	}
+
+	/// @brief Returns the natural logarithm of an element
+	/// @tparam T Data type of the element
+	/// @param val Value of the element
+	/// @return Natural logarithm of input element	 
+	template <typename T>
+	T log(const T& val)
+	{
+		T other = val;
+		other = std::log(other);
+		return other;
+	}
+
+	/// @brief Returns the logarithm of base 10 of an element
+	/// @tparam T Data type of the element
+	/// @param val Value of the element
+	/// @return Logarithm of base 10 of input element 
+	template <typename T>
+	T log10(const T& val)
+	{
+		T other = val;
+		other = std::log10(other);
+		return other;
+	}
+
 	/// @brief Returns the squared magnitude of a complex number in decibel
 	/// @tparam T Data type of the complex number
 	/// @param z Complex number

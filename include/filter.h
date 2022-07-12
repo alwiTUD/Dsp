@@ -14,9 +14,9 @@ namespace dsp::filter
 	/// @param x Input signal
 	/// @return Filtered signal
 	template<class T>
-	std::vector<T> filter(std::vector<T> b, std::vector<T> a, 
+	std::vector<T> filter(std::vector<T> b, std::vector<T> a,
 		const std::vector<T>& x);
-	
+
 	/// @brief Returns linear prediction filter coefficients
 	/// @tparam T Data type of the samples
 	/// @param x Input vector
@@ -61,7 +61,7 @@ namespace dsp::filter
 	/// @brief Find heights of the triangular filters so that all filters will have an area equal to 1
 	/// @param borderFreqs_Hz Border frequencies [Hz]
 	/// @return Filter heights
-	std::vector<double> findFilterHeights(std::vector<double> borderFreqs_Hz);
+	std::vector<double> findFilterHeights(const std::vector<double>& borderFreqs_Hz);
 
 	/// @brief Find the weights of each frequency bin for each filter of the Mel filter bank
 	/// @param borderFreqs_Hz Border frequencies of the triangular filters [Hz]
@@ -69,7 +69,7 @@ namespace dsp::filter
 	/// @param samplingRate Sampling rate [Hz]
 	/// @param numPositiveFrequencyBins equal to nFFT/2 + 1
 	/// @return A vector of vectors. The "matrix" contains the filter weights of the mel filter bank [numFilters x numPositiveFrequencyBins]
-	std::vector<std::vector<double>> findFilterWeights(std::vector<double>& borderFreqs_Hz, std::vector<double>& filterHeights, double samplingRate, int numPositiveFrequencyBins);
+	std::vector<std::vector<double>> findFilterWeights(const std::vector<double>& borderFreqs_Hz, const std::vector<double>& filterHeights, double samplingRate, int numPositiveFrequencyBins);
 
 	/// @brief Applies the mel filterbank to the spectrogram
 	/// @param wFilt The filter weights of the mel filter bank

@@ -145,24 +145,23 @@ std::vector<std::vector<T>> dsp::filter::melFilterbank(const std::vector<std::ve
 
 std::vector<double> dsp::filter::findBorderFreqs_Hz(int numFilters, std::pair<double, double> cutoffFreqs_Hz)
 {
+	std::vector<double> borderFreqs_Hz;
+	borderFreqs_Hz.reserve(numFilters + 2);
 	// Convert border frequencies from Hz to Mel
 	double fmin_Mel = dsp::convert::hz2mel(cutoffFreqs_Hz.first);
 	double fmax_Mel = dsp::convert::hz2mel(cutoffFreqs_Hz.second);
-	double freqDiff_Mel = fmax_Mel - fmin_Mel;
-	// Calculate width of individual filters (all same width in Mel domain)
-	double freqDelta_Mel = freqDiff_Mel / static_cast<double>(numFilters + 1.0);
-
-	std::vector<double> borderFreqs;
-	borderFreqs.reserve(static_cast<size_t>(numFilters + 2));
-	// Fill vector borderFreqs with border frequencies of individual filters in Hz
-	for (int filterIdx = 0; filterIdx < numFilters + 2; filterIdx++)
+	
+	// Fill a vector with evenly spaced border frequencies (in mel domain)
+	std::vector<double> borderFreqs_mel = linspace(fmin_Mel, fmax_Mel, static_cast<size_t>(numFilters) + 2);
+	// Convert all frequencies to Hz domain and return them
+	for (const auto& borderFreq_mel : borderFreqs_mel)
 	{
-		borderFreqs.push_back(dsp::convert::mel2hz(fmin_Mel + filterIdx * freqDelta_Mel));
+		borderFreqs_Hz.push_back(convert::mel2hz(borderFreq_mel));
 	}
-	return borderFreqs;
+	return borderFreqs_Hz;
 }
 
-std::vector<double> dsp::filter::findFilterHeights(std::vector<double> borderFreqs_Hz)
+std::vector<double> dsp::filter::findFilterHeights(const std::vector<double>& borderFreqs_Hz)
 {
 	std::vector<double> filterHeights;
 	filterHeights.reserve(borderFreqs_Hz.size() - 2);
@@ -173,11 +172,11 @@ std::vector<double> dsp::filter::findFilterHeights(std::vector<double> borderFre
 	{
 		filterHeights.push_back(2.0 / (borderFreqs_Hz[borderFreqIdx + 2] - borderFreqs_Hz[borderFreqIdx]));
 	}
-	
+
 	return filterHeights;
 }
 
-std::vector<std::vector<double>> dsp::filter::findFilterWeights(std::vector<double>& borderFreqs_Hz, std::vector<double>& filterHeights, double samplingRate, int numPositiveFrequencyBins)
+std::vector<std::vector<double>> dsp::filter::findFilterWeights(const std::vector<double>& borderFreqs_Hz, const std::vector<double>& filterHeights, double samplingRate, int numPositiveFrequencyBins)
 {
 	const int numFilters = static_cast<int>(filterHeights.size());
 	std::vector<std::vector<double>> wFilt(numFilters, std::vector<double>(numPositiveFrequencyBins));
@@ -217,8 +216,8 @@ std::vector<std::vector<double>> dsp::filter::findFilterWeights(std::vector<doub
 std::vector<std::vector<double>> dsp::filter::filterAndSum(const std::vector<std::vector<double>>& wFilt, const std::vector<std::vector<double>>& spectrogram)
 {
 	int numFilt = static_cast<int>(wFilt.size());
-	int numberOfFrames = static_cast<int>(spectrogram[0].size());
-	int numberOfPositiveFrequencyBins = static_cast<int>(wFilt[0].size());
+	const int numberOfFrames = static_cast<int>(spectrogram[0].size());
+	const int numberOfPositiveFrequencyBins = static_cast<int>(wFilt[0].size());
 
 	// Initializes a vector filled with zeros to store the values of the Mel-spectrogram
 	std::vector<std::vector<double>> melSpectrogram;
@@ -251,7 +250,7 @@ std::vector<std::vector<double>> dsp::filter::linearToLog(const std::vector<std:
 
 	// Applies log to each value of the mel spectrogram (a very small epsilon value is added to prevent log(0))
 	for (auto& filterOutput : linMelSpectrogram) {
-		std::transform(filterOutput.begin(), filterOutput.end(), logMelSpectrogramFrame.begin(), [](double val) -> double {return std::log10(val + std::numeric_limits<double>::epsilon()); }); // EPSILON equals the one from MATLAB
+		std::transform(filterOutput.begin(), filterOutput.end(), logMelSpectrogramFrame.begin(), [](double val) -> double {return log10(val + std::numeric_limits<double>::epsilon()); }); // EPSILON equals the one from MATLAB
 		logMelSpectrogram.push_back(logMelSpectrogramFrame);
 	}
 

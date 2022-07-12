@@ -1,6 +1,5 @@
 #include "gtest/gtest.h"
 #include "MelFilterbankReference.h"
-#include "MelFilterbankReference.h"
 
 #include <numeric>
 #include <iostream>
@@ -423,7 +422,7 @@ TEST_F(DspTest, Spectrogram)
 
 TEST_F(DspTest, MelFilterCenterFrequencies) {
 	std::pair<double, double> cutoffFreqs_Hz{ 200, 3700 };
-	const int numFilters = 15;
+	constexpr int numFilters = 15;
 
 	std::vector<double> borderFrequencies_Hz;
 	borderFrequencies_Hz.reserve(numFilters + 2);
@@ -439,7 +438,7 @@ TEST_F(DspTest, MelFilterCenterFrequencies) {
 TEST_F(DspTest, MelFilterBankArea)
 {
 	std::pair<double, double> cutoffFreqs_Hz{ 200, 3700 };
-	const int numFilters = 15;
+	constexpr int numFilters = 15;
 
 	std::vector<double> borderFrequencies_Hz;
 	borderFrequencies_Hz.reserve(numFilters + 2);
@@ -466,9 +465,9 @@ TEST_F(DspTest, MelFilterBankArea)
 TEST_F(DspTest, MelFilterBankWeights)
 {
 	std::pair<double, double> cutoffFreqs_Hz{ 200, 3700 };
-	const int numFilters = 15;
-	const int samplingFrequency = 44100;
-	int numPositiveFrequencyBins = static_cast<int>(melFilterbankReference[0].size());
+	constexpr int numFilters = 15;
+	constexpr int samplingFrequency = 44100;
+	const int numPositiveFrequencyBins = static_cast<int>(melFilterbankReference[0].size());
 
 	std::vector<double> borderFrequencies_Hz;
 	borderFrequencies_Hz.reserve(numFilters + 2);
@@ -494,8 +493,8 @@ TEST_F(DspTest, MelFilterBankWeights)
 
 TEST_F(DspTest, MelFilterAndSum)
 {
-	int numFilters = 15;
-	int numFrames = spectrogramReference[0].size();
+	constexpr int numFilters = 15;
+	const int numFrames = spectrogramReference[0].size();
 
 	std::vector<std::vector<double>> melSpectrogram;
 	melSpectrogram.resize(numFilters, std::vector<double>(melSpectrogramReference[0].size()));
@@ -512,8 +511,8 @@ TEST_F(DspTest, MelFilterAndSum)
 
 TEST_F(DspTest, MelLinearToLog)
 {
-	int numFilters = 15;
-	int numFrames = spectrogramReference[0].size();
+	constexpr int numFilters = 15;
+	const int numFrames = spectrogramReference[0].size();
 
 	std::vector<std::vector<double>> melLogSpectrogram;
 	melLogSpectrogram.resize(numFilters, std::vector<double>(melSpectrogramReference[0].size()));
@@ -530,10 +529,10 @@ TEST_F(DspTest, MelLinearToLog)
 TEST_F(DspTest, MelFilterBank)
 {
 	
-	int numFilters = 15;
+	constexpr int numFilters = 15;
 	std::pair<double, double> cutoffFreqs{ 200, 3700 };
-	int samplingRate = 44100;
-	int numFrames = spectrogramReference[0].size();
+	constexpr int samplingRate = 44100;
+	const int numFrames = spectrogramReference[0].size();
 
 	std::vector<std::vector<double>> melLogSpectrogram;
 	melLogSpectrogram.resize(numFilters, std::vector<double>(numFrames));
