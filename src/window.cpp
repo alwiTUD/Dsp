@@ -43,7 +43,7 @@ namespace dsp::window
 #ifndef ZERO_DEPENDENCIES
 		case type::kaiser:
 			return kaiser<T>(N, parameters[0], sym);
-#endif // !ZERO_DEPENDENCIES
+#endif
 		case type::gaussian:
 			return gaussian<T>(N, parameters[0], sym);
 		case type::general_gaussian:
