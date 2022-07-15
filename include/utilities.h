@@ -1,6 +1,9 @@
 #pragma once
+//#pragma STDC FENV_ACCESS ON
+
 #include <algorithm>
 #include <complex>
+#include <cfenv>
 #include <map>
 #include <numeric>
 #include <utility>
@@ -230,18 +233,35 @@ namespace dsp
 		return xs;
 	}
 
+	 /// @brief Return transposed input vector of vectors
+	 /// @tparam T Type of the values in the vector
+	 /// @param data Input vector of vectors
+	 /// @return Transposed input vector of vectors
+	template <typename T>
+	std::vector<std::vector<T>> transpose(const std::vector<std::vector<T>> data)
+	{
+		std::vector<std::vector<T>> result(data[0].size(), std::vector<T>(data.size()));
+		for (typename std::vector<T>::size_type rowIdx = 0; rowIdx < data[0].size(); ++rowIdx)
+		{
+			for (typename std::vector<T>::size_type columnIdx = 0; columnIdx < data.size(); ++columnIdx)
+			{
+				result[rowIdx][columnIdx] = data[columnIdx][rowIdx];
+			}
+		}
+		return result;
+	}
 	
 	 /// @brief Returns the natural logarithm of each element of a vector
 	 /// @tparam T Data type of the elements
 	 /// @param val Value of the element
 	 /// @return Vector of natural logarithm of each element of input vector	 
 	template <typename T>
-	std::vector<T> log(const std::vector<T>& val)
+	std::vector<T> log(const std::vector<T>& val, bool throwExcepetion = false)
 	{
 		std::vector<T> other = val;
 		for (T& i : other)
 		{
-			i = std::log(i);
+			i = log(i, throwExcepetion);
 		}
 		return other;
 	}
@@ -251,12 +271,12 @@ namespace dsp
 	/// @param val Value of the element
 	/// @return Vector of logarithm of base 10 of each element of input vector	 
 	template <typename T>
-	std::vector<T> log10(const std::vector<T>& val)
+	std::vector<T> log10(const std::vector<T>& val, bool throwExcepetion = false)
 	{
 		std::vector<T> other = val;
 		for (T& i : other)
 		{
-			i = std::log10(i);
+			i = log10(i, throwExcepetion);
 		}
 		return other;
 	}
@@ -266,10 +286,16 @@ namespace dsp
 	/// @param val Value of the element
 	/// @return Natural logarithm of input element	 
 	template <typename T>
-	T log(const T& val)
+	T log(const T& val, bool throwExcepetion)
 	{
+		errno = 0;
+		std::feclearexcept(FE_ALL_EXCEPT);
 		T other = val;
 		other = std::log(other);
+		if (errno != 0 && throwExcepetion)
+		{
+			throw std::overflow_error("Value is out of range! (dsp::log())");
+		}
 		return other;
 	}
 
@@ -278,10 +304,16 @@ namespace dsp
 	/// @param val Value of the element
 	/// @return Logarithm of base 10 of input element 
 	template <typename T>
-	T log10(const T& val)
+	T log10(const T& val, bool throwExcepetion)
 	{
-		T other = val;
+		errno = 0;
+		std::feclearexcept(FE_ALL_EXCEPT);
+		T other = val;		
 		other = std::log10(other);
+		if (errno != 0 && throwExcepetion)
+		{
+			throw std::overflow_error("Value is out of range! (dsp::log10())");
+		}
 		return other;
 	}
 

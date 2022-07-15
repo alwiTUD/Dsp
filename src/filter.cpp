@@ -112,8 +112,30 @@ dsp::Signal<T> dsp::filter::medianfilter(const Signal<T>& x, typename Signal<T>:
 	return Signal(x.getSamplingRate_Hz(), medianfilter<T>(x.getSamples(), kernel_size));
 }
 
+template <class T>
+std::vector<T> dsp::filter::movingAverageFilter(const std::vector<T>& x, size_t kernel_size)
+{
+	std::vector<T> filteredSignal;
+	for (size_t sampleIdx = 0; sampleIdx < x.size(); ++sampleIdx)
+	{
+		if (sampleIdx < (kernel_size - 1))
+		{
+			std::partial_sum(x[0], x[sampleIdx], filteredSignal[sampleIdx]);
+		}
+		else
+		{
+			std::partial_sum(x[sampleIdx - (kernel_size - 1)], x[sampleIdx], filteredSignal[sampleIdx]);
+		}
+	}
+	for (T& sample : filteredSignal)
+	{
+		sample /= static_cast<double>(kernel_size);
+	}
+	return filteredSignal;
+}
+
 template<class T>
-std::vector<std::vector<T>> dsp::filter::melFilterbank(const std::vector<std::vector<T>>& spectrogram, int numFilters, std::pair<double, double> cutoffFreqs_Hz, double samplingRate)
+std::vector<std::vector<T>> dsp::filter::melFilterbank(const std::vector<std::vector<T>>& spectrogram, int numFilters, std::pair<double, double> cutoffFreqs_Hz, double samplingRate, bool throwLogException)
 {
 	// Find the border frequencies of the mel filter bank
 	std::vector<double> borderFreqs_Hz;
@@ -126,19 +148,19 @@ std::vector<std::vector<T>> dsp::filter::melFilterbank(const std::vector<std::ve
 	filterHeights = findFilterHeights(borderFreqs_Hz);
 
 	// Find the weights of each filter of the mel filter bank in relation to the frequency bins of the input spectrogram
-	const int numPositiveFrequencyBins = static_cast<int>(spectrogram.size());
+	const int numPositiveFrequencyBins = static_cast<int>(spectrogram[0].size());
 	std::vector<std::vector<double>> filterWeights(numFilters, std::vector<double>(numPositiveFrequencyBins));
 	filterWeights = findFilterWeights(borderFreqs_Hz, filterHeights, samplingRate, numPositiveFrequencyBins);
 
 	// Applies the mel filter bank to the spectrogram, resulting in a mel spectrogram
 	std::vector<std::vector<double>> melSpectrogram;
-	melSpectrogram.resize(numFilters, std::vector<double>(static_cast<int>(spectrogram[0].size())));
+	melSpectrogram.resize(numFilters, std::vector<double>(static_cast<int>(spectrogram.size())));
 	melSpectrogram = filterAndSum(filterWeights, spectrogram);
 
 	// Applies log to the mel spectrogram, resulting in a mel log spectrogram
 	std::vector<std::vector<double>> melLogSpectrogram;
 	melLogSpectrogram.resize(numFilters, std::vector<double>(static_cast<int>(spectrogram[0].size())));
-	melLogSpectrogram = linearToLog(melSpectrogram);
+	melLogSpectrogram = linearToLog(melSpectrogram, throwLogException);
 	
 	return melLogSpectrogram;
 }
@@ -216,7 +238,7 @@ std::vector<std::vector<double>> dsp::filter::findFilterWeights(const std::vecto
 std::vector<std::vector<double>> dsp::filter::filterAndSum(const std::vector<std::vector<double>>& wFilt, const std::vector<std::vector<double>>& spectrogram)
 {
 	int numFilt = static_cast<int>(wFilt.size());
-	const int numberOfFrames = static_cast<int>(spectrogram[0].size());
+	const int numberOfFrames = static_cast<int>(spectrogram.size());
 	const int numberOfPositiveFrequencyBins = static_cast<int>(wFilt[0].size());
 
 	// Initializes a vector filled with zeros to store the values of the Mel-spectrogram
@@ -227,7 +249,7 @@ std::vector<std::vector<double>> dsp::filter::filterAndSum(const std::vector<std
 	for (int melFilt = 0; melFilt < numFilt; ++melFilt) {
 		for (int frame = 0; frame < numberOfFrames; ++frame) {
 			for (int frequencyBin = 0; frequencyBin < numberOfPositiveFrequencyBins; ++frequencyBin) {
-				melSpectrogram[melFilt][frame] += wFilt[melFilt][frequencyBin] * spectrogram[frequencyBin][frame];
+				melSpectrogram[melFilt][frame] += wFilt[melFilt][frequencyBin] * spectrogram[frame][frequencyBin];
 			}
 		}
 	}
@@ -235,7 +257,8 @@ std::vector<std::vector<double>> dsp::filter::filterAndSum(const std::vector<std
 	return melSpectrogram;
 }
 
-std::vector<std::vector<double>> dsp::filter::linearToLog(const std::vector<std::vector<double>>& linMelSpectrogram) {
+std::vector<std::vector<double>> dsp::filter::linearToLog(const std::vector<std::vector<double>>& linMelSpectrogram, bool throwLogException)
+{
 	std::vector<std::vector<double>> logMelSpectrogram;
 	logMelSpectrogram.reserve(linMelSpectrogram.size());
 
@@ -250,7 +273,7 @@ std::vector<std::vector<double>> dsp::filter::linearToLog(const std::vector<std:
 
 	// Applies log to each value of the mel spectrogram (a very small epsilon value is added to prevent log(0))
 	for (auto& filterOutput : linMelSpectrogram) {
-		std::transform(filterOutput.begin(), filterOutput.end(), logMelSpectrogramFrame.begin(), [](double val) -> double {return log10(val + std::numeric_limits<double>::epsilon()); }); // EPSILON equals the one from MATLAB
+		std::transform(filterOutput.begin(), filterOutput.end(), logMelSpectrogramFrame.begin(), [throwLogException](double val) -> double {return log10(val + std::numeric_limits<double>::epsilon(), throwLogException); }); // EPSILON equals the one from MATLAB
 		logMelSpectrogram.push_back(logMelSpectrogramFrame);
 	}
 
@@ -278,4 +301,5 @@ template dsp::Signal<float> dsp::filter::medianfilter(const dsp::Signal<float>& 
 template dsp::Signal<double> dsp::filter::medianfilter(const dsp::Signal<double>& x, Signal<double>::size_type kernel_size);
 template dsp::Signal<long double> dsp::filter::medianfilter(const dsp::Signal<long double>& x, Signal<long double>::size_type kernel_size);
 
-template std::vector<std::vector<double>> dsp::filter::melFilterbank(const std::vector<std::vector<double>>& spectrogram, int numFilters, std::pair<double, double> cutoffFreqs_Hz, double samplingRate);
+template std::vector<std::vector<double>> dsp::filter::melFilterbank(const std::vector<std::vector<double>>& spectrogram, int numFilters, std::pair<double, double> cutoffFreqs_Hz, double samplingRate, bool throwLogException);
+template std::vector<double> dsp::filter::movingAverageFilter(const std::vector<double>& x, size_t dim);

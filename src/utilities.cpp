@@ -179,3 +179,4 @@ template long double dsp::calculateMeanPower(typename std::vector<long double>::
 template std::vector<std::vector<float>> dsp::signalToFrames(const std::vector<float>& signal, unsigned frameLength, unsigned overlap);
 template std::vector<std::vector<double>> dsp::signalToFrames(const std::vector<double>& signal, unsigned frameLength, unsigned overlap);
 template std::vector<std::vector<long double>> dsp::signalToFrames(const std::vector<long double>& signal, unsigned frameLength, unsigned overlap);
+template std::vector<std::vector<double>> dsp::transpose(const std::vector<std::vector<double>> data);

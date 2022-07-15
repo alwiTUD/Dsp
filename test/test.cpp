@@ -1,5 +1,4 @@
 #include "gtest/gtest.h"
-#include "MelFilterbankReference.h"
 
 #include <numeric>
 #include <iostream>
@@ -11,6 +10,8 @@
 
 #include "dsp.h"
 #include "dct_ref_data.h"
+#include "MelFilterbankReference.h"
+
 
 struct DspTest : ::testing::Test
 {
@@ -108,6 +109,21 @@ TEST_F(DspTest, Pad)
 		std::cout << x << " ";
 	}
 	std::cout << std::endl;
+}
+
+TEST_F(DspTest, Transpose)
+{
+	// for double
+	const std::vector<std::vector<double>> v1{ {1.0,2.0,3.0},{4.0,5.0,6.0} };
+	const std::vector<std::vector<double>> v1TransposeReference{ {1.0,4.0},{2.0,5.0},{3.0,6.0} };
+
+	EXPECT_EQ(v1TransposeReference, dsp::transpose(v1));
+
+	// for string
+	const std::vector<std::vector<std::string>> v2{ {"This", "meaningful", "transposed"},{"is","if","successfully"}};
+	const std::vector<std::vector<std::string>> v2TransposeReference{ {"This", "is"},{"meaningful", "if"},{"transposed","successfully"}};
+
+	EXPECT_EQ(v2TransposeReference, dsp::transpose(v2));
 }
 
 TEST_F(DspTest, MedianFilter)
@@ -511,7 +527,7 @@ TEST_F(DspTest, MelFilterAndSum)
 	std::vector<std::vector<double>> melSpectrogram;
 	melSpectrogram.resize(numFilters, std::vector<double>(melSpectrogramReference[0].size()));
 
-	melSpectrogram = dsp::filter::filterAndSum(melFilterbankReference, spectrogramReference);
+	melSpectrogram = dsp::filter::filterAndSum(melFilterbankReference, dsp::transpose(spectrogramReference));
 
 
 	for (int melFilt = 0; melFilt < numFilters; ++melFilt) {
@@ -528,7 +544,7 @@ TEST_F(DspTest, MelLinearToLog)
 
 	std::vector<std::vector<double>> melLogSpectrogram;
 	melLogSpectrogram.resize(numFilters, std::vector<double>(melSpectrogramReference[0].size()));
-	melLogSpectrogram = dsp::filter::linearToLog(melSpectrogramReference);
+	melLogSpectrogram = dsp::filter::linearToLog(melSpectrogramReference, false);
 
 	for (int melFilt = 0; melFilt < numFilters; ++melFilt) {
 		for (int frame = 0; frame < numFrames; ++frame) {
@@ -549,7 +565,7 @@ TEST_F(DspTest, MelFilterBank)
 	std::vector<std::vector<double>> melLogSpectrogram;
 	melLogSpectrogram.resize(numFilters, std::vector<double>(numFrames));
 
-	melLogSpectrogram = dsp::filter::melFilterbank(spectrogramReference, numFilters, cutoffFreqs, samplingRate);
+	melLogSpectrogram = dsp::filter::melFilterbank(dsp::transpose(spectrogramReference), numFilters, cutoffFreqs, samplingRate);
 
 	for (int melFilt = 0; melFilt < numFilters; ++melFilt) {
 		for (int frame = 0; frame < numFrames; ++frame) {

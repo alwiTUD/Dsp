@@ -41,15 +41,19 @@ namespace dsp::filter
 	template<class T>
 	dsp::Signal<T> medianfilter(const Signal<T>& x, typename Signal<T>::size_type kernel_size = 3);
 
+	template<class T>
+	std::vector<T> movingAverageFilter(const std::vector<T>& x, size_t kernel_size);
+
 	/// @brief Applies a mel filterbank to a magnitude spectrogram.
 	/// @tparam T Data type of the spectrogram
 	/// @param spectrogram Input spectrogram
 	/// @param numFilters Number of triangular filters
 	/// @param cutoffFreqs_Hz Lower and upper border frequencies of the mel filterbank [Hz]
 	/// @param samplingRate Sampling rate [Hz]
+	///	@param throwLogException Exception is thrown when log-value is out of range/invalid
 	/// @return MelSpectrogram
 	template<class T>
-	std::vector<std::vector<T>> melFilterbank(const std::vector<std::vector<T>>& spectrogram, int numFilters, std::pair<double, double> cutoffFreqs_Hz, double samplingRate);
+	std::vector<std::vector<T>> melFilterbank(const std::vector<std::vector<T>>& spectrogram, int numFilters, std::pair<double, double> cutoffFreqs_Hz, double samplingRate, bool throwLogException = false);
 
 	/// @brief Find border frequencies for given number of filters and cutoff frequencies [Hz]
 	/// Border frequencies will be equally spaced in mel domain
@@ -78,5 +82,5 @@ namespace dsp::filter
 	std::vector<std::vector<double>> filterAndSum(const std::vector<std::vector<double>>& wFilt, const std::vector<std::vector<double>>& spectrogram);
 
 
-	std::vector<std::vector<double>> linearToLog(const std::vector<std::vector<double>>& linMelSpectrogram);
+	std::vector<std::vector<double>> linearToLog(const std::vector<std::vector<double>>& linMelSpectrogram, bool throwLogException);
 }
