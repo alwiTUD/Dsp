@@ -120,11 +120,11 @@ std::vector<T> dsp::filter::movingAverageFilter(const std::vector<T>& x, size_t 
 	{
 		if (sampleIdx < (kernel_size - 1))
 		{
-			std::partial_sum(x[0], x[sampleIdx], filteredSignal[sampleIdx]);
+			std::partial_sum(x.begin() + 0, x.begin()+sampleIdx, filteredSignal.begin()+sampleIdx);
 		}
 		else
 		{
-			std::partial_sum(x[sampleIdx - (kernel_size - 1)], x[sampleIdx], filteredSignal[sampleIdx]);
+			std::partial_sum(x.begin()+ (sampleIdx - (kernel_size - 1)), x.begin()+sampleIdx, filteredSignal.begin()+sampleIdx);
 		}
 	}
 	for (T& sample : filteredSignal)
@@ -302,4 +302,4 @@ template dsp::Signal<double> dsp::filter::medianfilter(const dsp::Signal<double>
 template dsp::Signal<long double> dsp::filter::medianfilter(const dsp::Signal<long double>& x, Signal<long double>::size_type kernel_size);
 
 template std::vector<std::vector<double>> dsp::filter::melFilterbank(const std::vector<std::vector<double>>& spectrogram, int numFilters, std::pair<double, double> cutoffFreqs_Hz, double samplingRate, bool throwLogException);
-template std::vector<double> dsp::filter::movingAverageFilter(const std::vector<double>& x, size_t dim);
+template std::vector<double> dsp::filter::movingAverageFilter(const std::vector<double>& x, size_t kernel_size);
